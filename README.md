@@ -71,11 +71,17 @@ copy .env.example .env
 
 ### 3. Run
 
+**Web Dashboard:**
 ```bash
 python app.py
 ```
-
 Open **http://localhost:5000** in your browser.
+
+**CLI Mode (no UI needed):**
+```bash
+python cli.py
+```
+Interactive terminal menu — scrape, match, chat, and track from the command line.
 
 ## 📖 Usage
 
