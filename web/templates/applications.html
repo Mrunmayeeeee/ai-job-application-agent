@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Applications – AI Job Agent{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Applications</h2>
+    <p>Track your AI-matched job applications</p>
+</div>
+
+<!-- Status Filters -->
+<div class="filters-bar">
+    <a href="/applications" class="filter-chip {% if not current_status %}active{% endif %}">All</a>
+    <a href="/applications?status=recommended" class="filter-chip {% if current_status == 'recommended' %}active{% endif %}">✅ Recommended</a>
+    <a href="/applications?status=review" class="filter-chip {% if current_status == 'review' %}active{% endif %}">🔍 Review</a>
+    <a href="/applications?status=cover_letter_ready" class="filter-chip {% if current_status == 'cover_letter_ready' %}active{% endif %}">✉️ Cover Letter Ready</a>
+    <a href="/applications?status=applied" class="filter-chip {% if current_status == 'applied' %}active{% endif %}">📤 Applied</a>
+    <a href="/applications?status=interview" class="filter-chip {% if current_status == 'interview' %}active{% endif %}">🎙️ Interview</a>
+    <a href="/applications?status=skipped" class="filter-chip {% if current_status == 'skipped' %}active{% endif %}">⏭️ Skipped</a>
+</div>
+
+{% if applications %}
+<!-- Applications Table -->
+<div class="card">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Position</th>
+                <th>Company</th>
+                <th>Source</th>
+                <th>Match Score</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for app in applications %}
+            <tr>
+                <td>
+                    <a href="/application/{{ app.id }}" style="font-weight: 500; color: var(--text-primary);">
+                        {{ app.title | truncate(35) }}
+                    </a>
+                    {% if app.location %}
+                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">📍 {{ app.location }}</div>
+                    {% endif %}
+                </td>
+                <td style="color: var(--text-accent); font-weight: 500;">{{ app.company }}</td>
+                <td><span class="badge badge-{{ app.source | lower }}">{{ app.source }}</span></td>
+                <td>
+                    <div class="score-bar">
+                        <div class="score-track">
+                            <div class="score-fill {% if app.match_score >= 0.7 %}high{% elif app.match_score >= 0.4 %}medium{% else %}low{% endif %}"
+                                 style="width: {{ (app.match_score * 100) | int }}%"></div>
+                        </div>
+                        <span class="score-value">{{ "%.0f"|format(app.match_score * 100) }}%</span>
+                    </div>
+                </td>
+                <td><span class="badge badge-{{ app.status }}">{{ app.status | replace('_', ' ') | title }}</span></td>
+                <td>
+                    <div style="display: flex; gap: 6px;">
+                        <a href="/application/{{ app.id }}" class="btn btn-sm btn-secondary">View</a>
+                        {% if app.status == 'recommended' or app.status == 'cover_letter_ready' %}
+                        <button class="btn btn-sm btn-success" onclick="updateAppStatus({{ app.id }}, 'applied')">
+                            Mark Applied
+                        </button>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="empty-state">
+    <div class="empty-icon">📋</div>
+    <h3>No applications yet</h3>
+    <p>
+        {% if current_status %}
+        No applications with status "{{ current_status }}". Try a different filter.
+        {% else %}
+        Start by uploading your resume, scraping jobs, and running the AI matcher from the dashboard.
+        {% endif %}
+    </p>
+    <a href="/" class="btn btn-primary" style="margin-top: 16px;">Go to Dashboard</a>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,14 @@
+# AI Job Application Agent - Dependencies
+flask==3.1.0
+flask-cors==5.0.1
+langchain==0.3.25
+langchain-openai==0.3.12
+langchain-community==0.3.21
+openai==1.82.0
+selenium==4.32.0
+webdriver-manager==4.0.2
+beautifulsoup4==4.13.4
+PyPDF2==3.0.1
+python-docx==1.1.2
+python-dotenv==1.1.0
+pydantic==2.11.3

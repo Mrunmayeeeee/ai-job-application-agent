@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block title %}Jobs – AI Job Agent{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Scraped Jobs</h2>
+    <p>{{ total }} jobs found across all sources</p>
+</div>
+
+<!-- Source Filters -->
+<div class="filters-bar">
+    <a href="/jobs" class="filter-chip {% if not source %}active{% endif %}">All Sources</a>
+    <a href="/jobs?source=LinkedIn" class="filter-chip {% if source == 'LinkedIn' %}active{% endif %}">🔗 LinkedIn</a>
+    <a href="/jobs?source=Internshala" class="filter-chip {% if source == 'Internshala' %}active{% endif %}">🎓 Internshala</a>
+    <div style="flex: 1;"></div>
+    <button class="btn btn-primary btn-sm" onclick="document.getElementById('scrape-modal').style.display='flex'">
+        🔍 Scrape More Jobs
+    </button>
+</div>
+
+<!-- Jobs List -->
+{% if jobs %}
+<div style="display: flex; flex-direction: column; gap: 16px;" class="stagger">
+    {% for job in jobs %}
+    <div class="job-card fade-in">
+        <div class="job-card-header">
+            <div>
+                <h3>{{ job.title or 'Untitled Position' }}</h3>
+                <div class="company">{{ job.company or 'Unknown Company' }}</div>
+                <div class="meta">
+                    {% if job.location %}
+                    <span>📍 {{ job.location }}</span>
+                    {% endif %}
+                    {% if job.salary %}
+                    <span>💰 {{ job.salary }}</span>
+                    {% endif %}
+                    {% if job.job_type %}
+                    <span>🏷️ {{ job.job_type }}</span>
+                    {% endif %}
+                    {% if job.posted_date %}
+                    <span>📅 {{ job.posted_date }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            <span class="badge badge-{{ job.source | lower }}">{{ job.source }}</span>
+        </div>
+
+        {% if job.description %}
+        <p style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 8px; line-height: 1.6;">
+            {{ job.description | truncate(200) }}
+        </p>
+        {% endif %}
+
+        <div class="job-card-actions">
+            {% if job.job_url %}
+            <a href="{{ job.job_url }}" target="_blank" class="btn btn-sm btn-secondary">
+                🔗 View Original
+            </a>
+            {% endif %}
+            <button class="btn btn-sm btn-primary" onclick="generateCoverLetter({{ job.id }})">
+                ✉️ Generate Cover Letter
+            </button>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Pagination -->
+{% if total_pages > 1 %}
+<div class="pagination">
+    {% if page_num > 1 %}
+    <a href="/jobs?page={{ page_num - 1 }}{% if source %}&source={{ source }}{% endif %}">←</a>
+    {% endif %}
+    
+    {% for p in range(1, total_pages + 1) %}
+        {% if p == page_num %}
+        <span class="active">{{ p }}</span>
+        {% elif p <= 3 or p > total_pages - 2 or (p >= page_num - 1 and p <= page_num + 1) %}
+        <a href="/jobs?page={{ p }}{% if source %}&source={{ source }}{% endif %}">{{ p }}</a>
+        {% elif p == 4 or p == total_pages - 2 %}
+        <span style="border: none; color: var(--text-muted);">…</span>
+        {% endif %}
+    {% endfor %}
+    
+    {% if page_num < total_pages %}
+    <a href="/jobs?page={{ page_num + 1 }}{% if source %}&source={{ source }}{% endif %}">→</a>
+    {% endif %}
+</div>
+{% endif %}
+
+{% else %}
+<div class="empty-state">
+    <div class="empty-icon">🔍</div>
+    <h3>No jobs found</h3>
+    <p>Start by scraping job listings from LinkedIn or Internshala using the button above.</p>
+    <button class="btn btn-primary" onclick="document.getElementById('scrape-modal').style.display='flex'" style="margin-top: 16px;">
+        🔍 Scrape Jobs Now
+    </button>
+</div>
+{% endif %}
+
+<!-- Scrape Modal (reused) -->
+<div id="scrape-modal" class="loading-overlay" style="display: none; cursor: pointer;" onclick="if(event.target===this)this.style.display='none'">
+    <div class="card" style="max-width: 480px; width: 90%; cursor: default;" onclick="event.stopPropagation()">
+        <div class="card-header">
+            <h3 class="card-title">🔍 Scrape Job Listings</h3>
+            <button class="btn btn-icon btn-secondary" onclick="document.getElementById('scrape-modal').style.display='none'">✕</button>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Search Query</label>
+            <input type="text" id="scrape-query" class="form-input" placeholder="e.g. Python Developer, Data Scientist">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Location</label>
+            <input type="text" id="scrape-location" class="form-input" placeholder="e.g. India, Remote" value="India">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Sources</label>
+            <div style="display: flex; gap: 16px; margin-top: 8px;">
+                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; color: var(--text-secondary); font-size: 0.9rem;">
+                    <input type="checkbox" class="source-checkbox" value="linkedin" checked> LinkedIn
+                </label>
+                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; color: var(--text-secondary); font-size: 0.9rem;">
+                    <input type="checkbox" class="source-checkbox" value="internshala" checked> Internshala
+                </label>
+            </div>
+        </div>
+        <button class="btn btn-primary btn-lg" style="width: 100%;" onclick="document.getElementById('scrape-modal').style.display='none'; scrapeJobs();">
+            🚀 Start Scraping
+        </button>
+    </div>
+</div>
+{% endblock %}

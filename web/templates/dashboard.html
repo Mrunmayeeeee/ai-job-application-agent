@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+{% block title %}Dashboard – AI Job Agent{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Dashboard</h2>
+    <p>Your AI-powered job application command center</p>
+</div>
+
+<!-- Stats Overview -->
+<div class="stats-grid stagger">
+    <div class="stat-card purple">
+        <div class="stat-icon">💼</div>
+        <div class="stat-value">{{ stats.total_jobs or 0 }}</div>
+        <div class="stat-label">Jobs Scraped</div>
+    </div>
+    <div class="stat-card green">
+        <div class="stat-icon">📋</div>
+        <div class="stat-value">{{ stats.total_applications or 0 }}</div>
+        <div class="stat-label">Applications</div>
+    </div>
+    <div class="stat-card orange">
+        <div class="stat-icon">🎯</div>
+        <div class="stat-value">{{ "%.0f"|format((stats.avg_match_score or 0) * 100) }}%</div>
+        <div class="stat-label">Avg Match Score</div>
+    </div>
+    <div class="stat-card blue">
+        <div class="stat-icon">📄</div>
+        <div class="stat-value">{{ "Active" if resume else "None" }}</div>
+        <div class="stat-label">Resume Status</div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="quick-actions stagger">
+    <div class="quick-action-card" onclick="document.getElementById('scrape-modal').style.display='flex'">
+        <div class="quick-action-icon" style="background: rgba(99, 102, 241, 0.12); color: #818cf8;">🔍</div>
+        <div>
+            <h4>Scrape New Jobs</h4>
+            <p>Search LinkedIn & Internshala for opportunities</p>
+        </div>
+    </div>
+    <div class="quick-action-card" onclick="runQuickMatch()">
+        <div class="quick-action-icon" style="background: rgba(16, 185, 129, 0.12); color: #34d399;">🤖</div>
+        <div>
+            <h4>AI Quick Match</h4>
+            <p>Match unprocessed jobs against your resume</p>
+        </div>
+    </div>
+    <div class="quick-action-card" onclick="document.getElementById('pipeline-modal').style.display='flex'">
+        <div class="quick-action-icon" style="background: rgba(139, 92, 246, 0.12); color: #a78bfa;">⚡</div>
+        <div>
+            <h4>Full AI Pipeline</h4>
+            <p>Scrape → Match → Generate Cover Letters</p>
+        </div>
+    </div>
+    <div class="quick-action-card" onclick="window.location.href='/chat'">
+        <div class="quick-action-icon" style="background: rgba(6, 182, 212, 0.12); color: #22d3ee;">💬</div>
+        <div>
+            <h4>Chat with Agent</h4>
+            <p>Ask the AI agent anything about your search</p>
+        </div>
+    </div>
+</div>
+
+<!-- Status Breakdown & Recent Applications -->
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+    <!-- Status Breakdown -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Application Pipeline</h3>
+        </div>
+        {% if stats.status_breakdown %}
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+            {% for status, count in stats.status_breakdown.items() %}
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span class="badge badge-{{ status }}">{{ status | replace('_', ' ') | title }}</span>
+                </div>
+                <span style="font-family: var(--font-mono); font-weight: 600; font-size: 0.9rem;">{{ count }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state" style="padding: 32px 16px;">
+            <div class="empty-icon">📊</div>
+            <p>No applications yet. Start by scraping jobs and running the AI matcher!</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Recent Applications -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Recent Applications</h3>
+            {% if recent_apps %}
+            <a href="/applications" class="btn btn-sm btn-secondary">View All</a>
+            {% endif %}
+        </div>
+        {% if recent_apps %}
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Job</th>
+                    <th>Score</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for app in recent_apps %}
+                <tr style="cursor: pointer;" onclick="window.location.href='/application/{{ app.id }}'">
+                    <td>
+                        <div style="font-weight: 500;">{{ app.title | truncate(30) }}</div>
+                        <div style="font-size: 0.78rem; color: var(--text-muted);">{{ app.company }}</div>
+                    </td>
+                    <td>
+                        <div class="score-bar">
+                            <div class="score-track">
+                                <div class="score-fill {% if app.match_score >= 0.7 %}high{% elif app.match_score >= 0.4 %}medium{% else %}low{% endif %}"
+                                     style="width: {{ (app.match_score * 100) | int }}%"></div>
+                            </div>
+                            <span class="score-value">{{ "%.0f"|format(app.match_score * 100) }}%</span>
+                        </div>
+                    </td>
+                    <td><span class="badge badge-{{ app.status }}">{{ app.status | replace('_', ' ') | title }}</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state" style="padding: 32px 16px;">
+            <div class="empty-icon">📋</div>
+            <p>No applications yet.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Scrape Modal -->
+<div id="scrape-modal" class="loading-overlay" style="display: none; cursor: pointer;" onclick="if(event.target===this)this.style.display='none'">
+    <div class="card" style="max-width: 480px; width: 90%; cursor: default;" onclick="event.stopPropagation()">
+        <div class="card-header">
+            <h3 class="card-title">🔍 Scrape Job Listings</h3>
+            <button class="btn btn-icon btn-secondary" onclick="document.getElementById('scrape-modal').style.display='none'">✕</button>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Search Query</label>
+            <input type="text" id="scrape-query" class="form-input" placeholder="e.g. Python Developer, Data Scientist">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Location</label>
+            <input type="text" id="scrape-location" class="form-input" placeholder="e.g. India, Remote, Bangalore" value="India">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Sources</label>
+            <div style="display: flex; gap: 16px; margin-top: 8px;">
+                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; color: var(--text-secondary); font-size: 0.9rem;">
+                    <input type="checkbox" class="source-checkbox" value="linkedin" checked> LinkedIn
+                </label>
+                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; color: var(--text-secondary); font-size: 0.9rem;">
+                    <input type="checkbox" class="source-checkbox" value="internshala" checked> Internshala
+                </label>
+            </div>
+        </div>
+        <button class="btn btn-primary btn-lg" style="width: 100%;" onclick="document.getElementById('scrape-modal').style.display='none'; scrapeJobs();">
+            🚀 Start Scraping
+        </button>
+    </div>
+</div>
+
+<!-- Pipeline Modal -->
+<div id="pipeline-modal" class="loading-overlay" style="display: none; cursor: pointer;" onclick="if(event.target===this)this.style.display='none'">
+    <div class="card" style="max-width: 480px; width: 90%; cursor: default;" onclick="event.stopPropagation()">
+        <div class="card-header">
+            <h3 class="card-title">⚡ Full AI Pipeline</h3>
+            <button class="btn btn-icon btn-secondary" onclick="document.getElementById('pipeline-modal').style.display='none'">✕</button>
+        </div>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 20px;">
+            This will scrape jobs, match them against your resume, and generate cover letters for top matches — all automatically.
+        </p>
+        <div class="form-group">
+            <label class="form-label">Job Search Query</label>
+            <input type="text" id="pipeline-query" class="form-input" placeholder="e.g. Full Stack Developer">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Location</label>
+            <input type="text" id="pipeline-location" class="form-input" placeholder="e.g. India" value="India">
+        </div>
+        <button class="btn btn-primary btn-lg" style="width: 100%;" onclick="document.getElementById('pipeline-modal').style.display='none'; runFullPipeline();">
+            ⚡ Run Full Pipeline
+        </button>
+    </div>
+</div>
+{% endblock %}

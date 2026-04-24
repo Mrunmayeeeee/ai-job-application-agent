@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Resume – AI Job Agent{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Resume Management</h2>
+    <p>Upload and manage your resume for AI-powered matching</p>
+</div>
+
+<!-- Current Resume -->
+{% if resume %}
+<div class="card" style="margin-bottom: 24px;">
+    <div class="card-header">
+        <h3 class="card-title">📄 Active Resume</h3>
+        <span class="badge badge-recommended">Active</span>
+    </div>
+    <div class="resume-info">
+        <div class="resume-icon">📄</div>
+        <div class="resume-details">
+            <h3>{{ resume.file_name }}</h3>
+            <p>Uploaded {{ resume.uploaded_at[:10] }} · {{ resume.raw_text | length | filesizeformat if resume.raw_text else 'N/A' }} characters extracted</p>
+        </div>
+    </div>
+
+    {% if resume.skills %}
+    <div style="margin-top: 20px;">
+        <h4 style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px;">
+            Detected Skills ({{ resume.skills | length }})
+        </h4>
+        <div class="skills-list">
+            {% for skill in resume.skills %}
+            <span class="skill-tag">{{ skill }}</span>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Resume Text Preview -->
+    <div style="margin-top: 20px;">
+        <h4 style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px;">
+            Extracted Text Preview
+        </h4>
+        <div class="cover-letter-box" style="max-height: 300px; font-size: 0.85rem;">{{ resume.raw_text[:2000] }}{% if resume.raw_text | length > 2000 %}...{% endif %}</div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Upload New Resume -->
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">{% if resume %}📤 Upload New Resume{% else %}📤 Upload Your Resume{% endif %}</h3>
+    </div>
+    
+    {% if not resume %}
+    <div style="padding: 12px 16px; background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: var(--radius-sm); margin-bottom: 20px;">
+        <p style="color: #fbbf24; font-size: 0.88rem;">
+            ⚠️ <strong>No resume uploaded yet.</strong> Upload your resume to enable AI matching and cover letter generation.
+        </p>
+    </div>
+    {% endif %}
+
+    <div class="upload-area" id="upload-area">
+        <input type="file" id="resume-file" accept=".pdf,.docx,.doc,.txt">
+        <div class="upload-icon">📎</div>
+        <h3>Drop your resume here or click to browse</h3>
+        <p>Supports PDF, DOCX, DOC, and TXT files (max 16MB)</p>
+    </div>
+
+    {% if resume %}
+    <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 12px; text-align: center;">
+        Uploading a new resume will replace the current one.
+    </p>
+    {% endif %}
+</div>
+{% endblock %}

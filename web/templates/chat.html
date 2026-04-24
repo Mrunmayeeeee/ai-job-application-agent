@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}AI Chat – AI Job Agent{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Chat with AI Agent</h2>
+    <p>Ask anything about your job search — the agent has full access to your data</p>
+</div>
+
+<div class="chat-container">
+    <!-- Chat Messages -->
+    <div class="chat-messages" id="chat-messages">
+        <!-- Welcome Message -->
+        <div class="chat-message ai">
+            <div class="chat-avatar">🤖</div>
+            <div class="chat-bubble">
+                <strong>Hey! I'm your AI Job Application Agent.</strong><br><br>
+                I can help you with:<br>
+                • 🔍 <strong>Scrape jobs</strong> from LinkedIn & Internshala<br>
+                • 🎯 <strong>Match jobs</strong> against your resume<br>
+                • ✉️ <strong>Generate cover letters</strong> tailored to each role<br>
+                • 📊 <strong>Track applications</strong> and give you insights<br><br>
+                Try one of the quick actions below, or type anything!
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div style="padding: 8px 24px; display: flex; gap: 8px; flex-wrap: wrap; border-top: 1px solid var(--border-subtle);">
+        <button class="chat-quick-action filter-chip" data-prompt="Scrape Python Developer jobs from LinkedIn and Internshala in India">
+            🔍 Scrape Python Jobs
+        </button>
+        <button class="chat-quick-action filter-chip" data-prompt="Read my resume and tell me my key strengths and what roles I'm best suited for">
+            📄 Analyze My Resume
+        </button>
+        <button class="chat-quick-action filter-chip" data-prompt="Match all unprocessed jobs against my resume and recommend the best ones">
+            🎯 Match Jobs
+        </button>
+        <button class="chat-quick-action filter-chip" data-prompt="Give me a complete summary of my application pipeline with statistics">
+            📊 Show Stats
+        </button>
+    </div>
+
+    <!-- Chat Input -->
+    <div class="chat-input-area">
+        <input type="text" id="chat-input" placeholder="Ask the AI agent anything..." autocomplete="off">
+        <button class="btn btn-primary" id="chat-send">
+            Send →
+        </button>
+    </div>
+</div>
+{% endblock %}
