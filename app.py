@@ -18,6 +18,9 @@ if sys.platform == "win32":
 from config import Config
 from web.app import app
 
+# Ensure required directories exist (needed for gunicorn/production)
+Config.ensure_dirs()
+
 # -- Logging Setup --
 logging.basicConfig(
     level=logging.INFO,
